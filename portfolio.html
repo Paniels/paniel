@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Franiel Sorno — Video Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0A0A0A;
+    --card: #141414;
+    --card2: #1C1C1C;
+    --amber: #FFB347;
+    --amber-dim: #C47E1A;
+    --white: #F0EDE8;
+    --muted: #7A7672;
+    --border: rgba(255,255,255,0.08);
+    --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-size: clamp(14px, 1.48148vw, 16px);
+  }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCANLINE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2.5rem;
+    background: rgba(10,10,10,0.8);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    transition: padding var(--transition);
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.08em;
+    color: var(--amber);
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    background: var(--amber);
+    color: var(--black) !important;
+    padding: 0.45rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 600 !important;
+    transition: opacity 0.2s !important;
+  }
+
+  .nav-cta:hover { opacity: 0.85; color: var(--black) !important; }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8rem 2.5rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255,179,71,0.12) 0%, transparent 70%);
+    top: 10%;
+    right: -100px;
+    pointer-events: none;
+    animation: glow-pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fade-up 0.8s var(--transition) 0.2s forwards;
+  }
+
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    color: var(--white);
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fade-up 0.9s var(--transition) 0.35s forwards;
+  }
+
+  .hero-name span { color: var(--amber); }
+
+  .hero-tagline {
+    margin-top: 1.5rem;
+    max-width: 480px;
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: 300;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fade-up 0.8s var(--transition) 0.5s forwards;
+  }
+
+  .hero-tags {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fade-up 0.8s var(--transition) 0.65s forwards;
+  }
+
+  .tag {
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.9rem;
+    border-radius: 2px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hero-scroll {
+    margin-top: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    animation: fade-up 0.8s var(--transition) 0.9s forwards;
+  }
+
+  .scroll-line {
+    width: 60px;
+    height: 1px;
+    background: var(--amber);
+    animation: line-grow 1s var(--transition) 1.2s both;
+  }
+
+  @keyframes line-grow {
+    from { width: 0; }
+    to { width: 60px; }
+  }
+
+  .scroll-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  @keyframes fade-up {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTIONS ─── */
+  section {
+    padding: 6rem 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-label::after {
+    content: '';
+    display: block;
+    flex: 1;
+    max-width: 40px;
+    height: 1px;
+    background: var(--amber);
+    opacity: 0.5;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ─── REVEAL ON SCROLL ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s var(--transition), transform 0.7s var(--transition);
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ─── ABOUT ─── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    font-weight: 300;
+    line-height: 1.8;
+  }
+
+  .about-text p:first-child {
+    font-size: 1.15rem;
+    color: var(--white);
+    font-weight: 400;
+  }
+
+  .editable {
+    border: 1px dashed rgba(255,179,71,0.3);
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    cursor: text;
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+    display: inline-block;
+    min-width: 40px;
+  }
+
+  .editable:focus {
+    border-color: var(--amber);
+    background: rgba(255,179,71,0.05);
+  }
+
+  .editable[contenteditable="true"]:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255,179,71,0.4);
+    pointer-events: none;
+  }
+
+  .about-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.5rem;
+  }
+
+  .stat-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--amber);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  /* ─── VIDEO SECTIONS ─── */
+  .reel-section {
+    padding: 4rem 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .reel-header {
+    padding: 0 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto 2.5rem;
+  }
+
+  .video-grid {
+    display: grid;
+    gap: 1.5rem;
+    padding: 0 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .video-grid.landscape-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .video-grid.portrait-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  /* Portrait strip scroll */
+  .portrait-scroll-outer {
+    overflow-x: auto;
+    padding: 0 2.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--amber) var(--card);
+  }
+
+  .portrait-scroll-inner {
+    display: flex;
+    gap: 1rem;
+    width: max-content;
+    padding-bottom: 0.5rem;
+  }
+
+  .video-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    cursor: pointer;
+    transition: border-color var(--transition), transform var(--transition);
+    group: true;
+  }
+
+  .video-card:hover {
+    border-color: rgba(255,179,71,0.5);
+    transform: translateY(-4px);
+  }
+
+  .video-card.landscape-card {
+    aspect-ratio: 16/9;
+  }
+
+  .video-card.portrait-card {
+    width: 200px;
+    aspect-ratio: 9/16;
+    flex-shrink: 0;
+  }
+
+  .video-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    position: relative;
+  }
+
+  .video-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,179,71,0.04) 0%, transparent 60%);
+  }
+
+  .play-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,179,71,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .video-card:hover .play-btn {
+    background: rgba(255,179,71,0.15);
+    border-color: var(--amber);
+  }
+
+  .play-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--amber);
+    margin-left: 3px;
+  }
+
+  .video-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .video-meta {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 0.75rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    font-size: 0.75rem;
+    color: var(--white);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity var(--transition), transform var(--transition);
+  }
+
+  .video-card:hover .video-meta { opacity: 1; transform: translateY(0); }
+
+  /* Embed input overlay */
+  .embed-input {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 2;
+    padding: 1rem;
+  }
+
+  .embed-input input {
+    width: 100%;
+    max-width: 240px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,179,71,0.4);
+    border-radius: 4px;
+    color: var(--white);
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    text-align: center;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    display: none;
+  }
+
+  .embed-input input:focus { border-color: var(--amber); }
+
+  .video-card:hover .embed-input input { display: block; }
+  .video-card:hover .video-label { display: none; }
+  .video-card:hover .play-btn { display: none; }
+
+  /* ─── SKILLS ─── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .skill-item {
+    background: var(--card);
+    padding: 1.5rem;
+    transition: background var(--transition);
+  }
+
+  .skill-item:hover { background: var(--card2); }
+
+  .skill-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--white);
+    margin-bottom: 0.35rem;
+  }
+
+  .skill-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ─── EXPERIENCE ─── */
+  .exp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .exp-item {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 2rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .exp-item:last-child { border-bottom: none; }
+
+  .exp-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 0.25rem;
+  }
+
+  .exp-role {
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--white);
+    margin-bottom: 0.25rem;
+  }
+
+  .exp-company {
+    font-size: 0.85rem;
+    color: var(--amber);
+    margin-bottom: 0.75rem;
+  }
+
+  .exp-desc {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ─── CONTACT ─── */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .contact-intro {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: var(--white);
+    font-size: 0.9rem;
+    transition: color 0.2s;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .contact-link:hover { color: var(--amber); }
+
+  .contact-link-icon {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--amber);
+    letter-spacing: 0;
+    flex-shrink: 0;
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .form-input {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    resize: none;
+  }
+
+  .form-input:focus { border-color: rgba(255,179,71,0.5); }
+  .form-input::placeholder { color: var(--muted); }
+
+  .form-btn {
+    background: var(--amber);
+    color: var(--black);
+    border: none;
+    border-radius: 4px;
+    padding: 0.85rem 1.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+
+  .form-btn:hover { opacity: 0.85; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  footer p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--amber);
+    letter-spacing: 0.06em;
+  }
+
+  /* ─── DIVIDER ─── */
+  .amber-line {
+    width: 2.5rem;
+    height: 2px;
+    background: var(--amber);
+    margin: 1.5rem 0;
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.25rem; }
+    .nav-links { display: none; }
+    .hero { padding: 7rem 1.25rem 3rem; }
+    section { padding: 4rem 1.25rem; }
+
+    .about-grid,
+    .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+
+    .exp-item {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding: 1.5rem 0;
+    }
+
+    .reel-header { padding: 0 1.25rem; }
+
+    .portrait-scroll-outer { padding: 0 1.25rem; }
+
+    .video-grid { padding: 0 1.25rem; }
+
+    footer {
+      flex-direction: column;
+      gap: 0.75rem;
+      text-align: center;
+      padding: 1.5rem 1.25rem;
+    }
+  }
+
+  /* ─── EDIT HINT BANNER ─── */
+  .edit-hint {
+    background: rgba(255,179,71,0.08);
+    border: 1px solid rgba(255,179,71,0.2);
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.8rem;
+    color: rgba(255,179,71,0.8);
+    text-align: center;
+    margin: 1rem 2.5rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 768px) {
+    .edit-hint { margin: 0.75rem 1.25rem 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">FS</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#longform">Long Form</a></li>
+    <li><a href="#shortform">Short Form</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#contact" class="nav-cta">Hire Me</a></li>
+  </ul>
+</nav>
+
+<!-- EDIT HINT -->
+<div class="edit-hint" id="editHint">
+  ✏️ Click on any dashed-border text below to edit it directly — replace placeholders with your own info.
+</div>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <p class="hero-eyebrow">Video Editor · Motion Graphics</p>
+  <h1 class="hero-name">
+    Franiel<br><span>Sorno</span>
+  </h1>
+  <p class="hero-tagline">
+    <span class="editable" contenteditable="true">Creative and detail-oriented Video Editor passionate about creating impactful content that educates and inspires.</span>
+  </p>
+  <div class="hero-tags">
+    <span class="tag editable" contenteditable="true">Long Form</span>
+    <span class="tag editable" contenteditable="true">Short Form / Reels</span>
+    <span class="tag editable" contenteditable="true">Motion Graphics</span>
+    <span class="tag editable" contenteditable="true">Adobe Premiere Pro</span>
+    <span class="tag editable" contenteditable="true">After Effects</span>
+    <span class="tag editable" contenteditable="true">Pampanga, Philippines</span>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll to explore</span>
+  </div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p class="section-label">About Me</p>
+      <h2 class="section-title">The editor behind the frame</h2>
+      <div class="amber-line"></div>
+      <p class="editable" contenteditable="true">
+        Hi, I'm Franiel Sorno — a creative and detail-oriented Video Editor based in Pampanga, Philippines, with experience producing engaging YouTube content and digital campaigns.
+      </p>
+      <p class="editable" contenteditable="true">
+        I have a strong understanding of visual storytelling, pacing, and audience retention. Skilled in Adobe Premiere Pro, After Effects, Photoshop, and Canva, I craft content that educates, entertains, and inspires — from long-form YouTube narratives to short-form reels that stop the scroll.
+      </p>
+      <p class="editable" contenteditable="true">
+        I'm proficient with industry-standard editing tools and have a keen eye for pacing, clarity, and visual storytelling. I thrive in collaborative environments and always deliver on deadline.
+      </p>
+    </div>
+
+    <div class="about-stats reveal reveal-delay-2">
+      <div class="stat-card">
+        <div class="stat-number editable" contenteditable="true">3+</div>
+        <div class="stat-label">Years of Experience</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number editable" contenteditable="true">50+</div>
+        <div class="stat-label">Projects Delivered</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number editable" contenteditable="true">∞</div>
+        <div class="stat-label">Frames of Passion</div>
+      </div>
+
+      <div style="margin-top:1rem; padding: 1.25rem; border: 1px solid var(--border); border-radius: 6px;">
+        <p style="font-size:0.75rem; color: var(--muted); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:0.75rem;">Tools I Use</p>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+          <span class="tag editable" contenteditable="true">Premiere Pro</span>
+          <span class="tag editable" contenteditable="true">After Effects</span>
+          <span class="tag editable" contenteditable="true">Photoshop</span>
+          <span class="tag editable" contenteditable="true">Canva</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── LONG FORM REEL ─── -->
+<div class="reel-section" id="longform">
+  <div class="reel-header reveal">
+    <p class="section-label">Featured Work</p>
+    <h2 class="section-title">Long Form Edits</h2>
+    <p style="color:var(--muted); font-size:0.875rem; margin-top:0.5rem;">YouTube videos, documentaries, vlogs, and brand films</p>
+  </div>
+
+  <div class="video-grid landscape-grid">
+    <!-- VIDEO CARD 1 -->
+    <div class="video-card landscape-card reveal reveal-delay-1">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here (e.g. youtube.com/watch?v=...)" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+
+    <!-- VIDEO CARD 2 -->
+    <div class="video-card landscape-card reveal reveal-delay-2">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+
+    <!-- VIDEO CARD 3 -->
+    <div class="video-card landscape-card reveal reveal-delay-3">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+
+    <!-- VIDEO CARD 4 -->
+    <div class="video-card landscape-card reveal reveal-delay-1">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+
+    <!-- VIDEO CARD 5 -->
+    <div class="video-card landscape-card reveal reveal-delay-2">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+
+    <!-- VIDEO CARD 6 -->
+    <div class="video-card landscape-card reveal reveal-delay-3">
+      <div class="video-placeholder">
+        <div class="play-btn">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span class="video-label">Paste YouTube/Vimeo URL below</span>
+        <div class="embed-input">
+          <input type="text" placeholder="Paste video URL here" onchange="embedVideo(this)" />
+        </div>
+      </div>
+      <div class="video-meta">
+        <span class="editable" contenteditable="true">Video Title Here</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SHORT FORM REEL ─── -->
+<div class="reel-section" id="shortform" style="background: var(--black); margin-top: 0;">
+  <div class="reel-header reveal">
+    <p class="section-label">Short Form</p>
+    <h2 class="section-title">Reels &amp; Shorts</h2>
+    <p style="color:var(--muted); font-size:0.875rem; margin-top:0.5rem;">Instagram Reels, TikTok, YouTube Shorts — vertical format edits</p>
+  </div>
+
+  <div class="portrait-scroll-outer">
+    <div class="portrait-scroll-inner">
+      <!-- PORTRAIT CARD 1 -->
+      <div class="video-card portrait-card reveal reveal-delay-1">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input">
+            <input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" />
+          </div>
+        </div>
+        <div class="video-meta">
+          <span class="editable" contenteditable="true">Reel Title</span>
+        </div>
+      </div>
+
+      <!-- PORTRAIT CARD 2 -->
+      <div class="video-card portrait-card reveal reveal-delay-2">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input"><input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" /></div>
+        </div>
+        <div class="video-meta"><span class="editable" contenteditable="true">Reel Title</span></div>
+      </div>
+
+      <!-- PORTRAIT CARD 3 -->
+      <div class="video-card portrait-card reveal reveal-delay-3">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input"><input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" /></div>
+        </div>
+        <div class="video-meta"><span class="editable" contenteditable="true">Reel Title</span></div>
+      </div>
+
+      <!-- PORTRAIT CARD 4 -->
+      <div class="video-card portrait-card reveal reveal-delay-4">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input"><input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" /></div>
+        </div>
+        <div class="video-meta"><span class="editable" contenteditable="true">Reel Title</span></div>
+      </div>
+
+      <!-- PORTRAIT CARD 5 -->
+      <div class="video-card portrait-card reveal reveal-delay-1">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input"><input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" /></div>
+        </div>
+        <div class="video-meta"><span class="editable" contenteditable="true">Reel Title</span></div>
+      </div>
+
+      <!-- PORTRAIT CARD 6 -->
+      <div class="video-card portrait-card reveal reveal-delay-2">
+        <div class="video-placeholder" style="height:100%;">
+          <div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <span class="video-label" style="font-size:0.65rem; text-align:center; padding: 0 0.5rem;">Paste URL on hover</span>
+          <div class="embed-input"><input type="text" placeholder="Paste Reel/Short URL" onchange="embedVideo(this)" /></div>
+        </div>
+        <div class="video-meta"><span class="editable" contenteditable="true">Reel Title</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SKILLS ─── -->
+<section>
+  <div class="reveal">
+    <p class="section-label">What I Bring</p>
+    <h2 class="section-title">Skills &amp; Specialties</h2>
+  </div>
+  <div style="height:2rem;"></div>
+  <div class="skills-grid reveal reveal-delay-1">
+    <div class="skill-item">
+      <div class="skill-name">Long Form Editing</div>
+      <div class="skill-desc">YouTube videos, brand films, and talking-head content — structured for pacing, retention, and audience engagement.</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Short Form / Reels</div>
+      <div class="skill-desc">Hook-first edits for TikTok, Instagram Reels, and YouTube Shorts optimized for engagement and retention.</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Motion Graphics</div>
+      <div class="skill-desc">Captions, lower thirds, title cards, and animated overlays built in After Effects and Premiere Pro.</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Thumbnail Design</div>
+      <div class="skill-desc">Click-worthy thumbnails and visual assets in Photoshop and Canva crafted to maximize CTR.</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Sound Design</div>
+      <div class="skill-desc">Audio syncing, sound design, and music integration to reinforce storytelling and audience retention.</div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Creative Thinking</div>
+      <div class="skill-desc">Strong problem-solving instincts, quick to adapt, and a good communicator across collaborative workflows.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EXPERIENCE ─── -->
+<section id="experience" style="padding-top:0;">
+  <div class="reveal">
+    <p class="section-label">Track Record</p>
+    <h2 class="section-title">Experience</h2>
+  </div>
+  <div style="height:2rem;"></div>
+
+  <div class="exp-list">
+    <div class="exp-item reveal reveal-delay-1">
+      <div class="exp-date">2025 – Present</div>
+      <div>
+        <div class="exp-role">Video Editor</div>
+        <div class="exp-company">Evan Carmichael YouTube</div>
+        <div class="exp-desc">Edit long-form and short-form YouTube videos using Premiere Pro and After Effects, adding motion graphics, captions, and sound design to maximize audience engagement while collaborating with the team to meet consistent publishing deadlines.</div>
+      </div>
+    </div>
+
+    <div class="exp-item reveal reveal-delay-2">
+      <div class="exp-date">2020 – 2021</div>
+      <div>
+        <div class="exp-role">Video Editor</div>
+        <div class="exp-company">TryCreate Company</div>
+        <div class="exp-desc">Produced promotional videos highlighting TryCreate's creatine products for social media and digital campaigns. Edited footage, added motion graphics, and designed thumbnails in Photoshop and Canva to increase product visibility and engagement.</div>
+      </div>
+    </div>
+
+    <div class="exp-item reveal reveal-delay-3">
+      <div class="exp-date">2018 – 2019</div>
+      <div>
+        <div class="exp-role">Video Editor</div>
+        <div class="exp-company">Freelance Editing</div>
+        <div class="exp-desc">Edited videos for YouTube, TikTok, Instagram, Facebook, and other digital platforms, including color correction, audio syncing, and pacing adjustments. Created motion graphics and thumbnails while managing multiple projects independently to meet client deadlines.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EDUCATION ─── -->
+<section style="padding-top:0;">
+  <div class="reveal">
+    <p class="section-label">Academic Background</p>
+    <h2 class="section-title">Education</h2>
+  </div>
+  <div style="height:2rem;"></div>
+  <div class="exp-list">
+    <div class="exp-item reveal reveal-delay-1">
+      <div class="exp-date">2024 – 2028</div>
+      <div>
+        <div class="exp-role">Bachelor of Science in Information Technology</div>
+        <div class="exp-company">Pampanga State University</div>
+      </div>
+    </div>
+    <div class="exp-item reveal reveal-delay-2">
+      <div class="exp-date">2011 – 2024</div>
+      <div>
+        <div class="exp-role">Bachelor of Business Management</div>
+        <div class="exp-company">La Verdad Christian School</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CONTACT ─── -->
+<div style="background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <section id="contact">
+    <div class="contact-grid">
+      <div class="reveal">
+        <p class="section-label">Get in Touch</p>
+        <h2 class="section-title">Let's work together</h2>
+        <div class="amber-line"></div>
+        <p class="contact-intro editable" contenteditable="true">
+          Got a project in mind? Whether you need a long-form YouTube edit, a punchy reel, or a full content package — I'd love to hear about it. Let's make something great.
+        </p>
+
+        <div class="contact-links">
+          <a class="contact-link" href="mailto:franielsanbuenaventurasorno@gmail.com">
+            <span class="contact-link-icon">✉</span>
+            <span>franielsanbuenaventurasorno@gmail.com</span>
+          </a>
+          <a class="contact-link" href="tel:+639086829431">
+            <span class="contact-link-icon">☎</span>
+            <span>+63 908 6829 431</span>
+          </a>
+          <a class="contact-link" href="#">
+            <span class="contact-link-icon">▶</span>
+            <span class="editable" contenteditable="true">youtube.com/@yourchannel</span>
+          </a>
+          <a class="contact-link" href="#">
+            <span class="contact-link-icon">@</span>
+            <span class="editable" contenteditable="true">@yourhandle on Instagram / TikTok</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="contact-form reveal reveal-delay-2">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input class="form-input" type="text" placeholder="Juan dela Cruz" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="juan@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Project Type</label>
+          <input class="form-input" type="text" placeholder="YouTube edit, Reel, Brand video…" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message</label>
+          <textarea class="form-input" rows="4" placeholder="Tell me about your project — content style, deadline, budget…"></textarea>
+        </div>
+        <button class="form-btn" onclick="alert('Set up your form backend (Formspree, Netlify Forms, etc.) to receive submissions!')">
+          Send Message →
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Franiel Sorno · Video Editor</p>
+  <span class="footer-logo">FS</span>
+  <p>Pampanga, Philippines</p>
+</footer>
+
+<script>
+  /* ─── SCROLL REVEAL ─── */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+        observer.unobserve(el.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  /* ─── DISMISS EDIT HINT ─── */
+  document.querySelectorAll('.editable').forEach(el => {
+    el.addEventListener('focus', () => {
+      const hint = document.getElementById('editHint');
+      if (hint) { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 400); }
+    }, { once: true });
+  });
+
+  /* ─── EMBED VIDEO FROM URL ─── */
+  function embedVideo(input) {
+    const url = input.value.trim();
+    if (!url) return;
+
+    let embedUrl = '';
+
+    // YouTube
+    const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`;
+
+    // Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+
+    if (!embedUrl) {
+      alert('Paste a YouTube or Vimeo URL.');
+      return;
+    }
+
+    const card = input.closest('.video-card');
+    const iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;border-radius:5px;';
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    card.style.position = 'relative';
+    card.appendChild(iframe);
+
+    // Hide placeholder
+    card.querySelector('.video-placeholder').style.display = 'none';
+  }
+
+  /* ─── NAV SHRINK ON SCROLL ─── */
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    if (window.scrollY > 60) {
+      nav.style.padding = '0.75rem 2.5rem';
+    } else {
+      nav.style.padding = '1.25rem 2.5rem';
+    }
+  });
+</script>
+</body>
+</html>
